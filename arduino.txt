@@ -1,0 +1,9 @@
+# Screen
+Tím - A4
+White - A5
+Blue - 5V
+Green - GND
+
+# MPU6050
+Yellow - A4
+Orange - A5
