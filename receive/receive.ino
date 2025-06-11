@@ -4,15 +4,14 @@
 #include "DHT.h"
 
 // ==== Pin Definitions ====
-const int enbA = 6; //3
-const int enbB = 3; //6
-const int IN1 = 4;    //Right Motor (-)
-const int IN2 = 2;    //Right Motor (+)
-const int IN3 = 7;    //Left Motor (+)
-const int IN4 = 5;    //Right Motor (-)
+const int enbA = 6; // Right motor PWM
+const int enbB = 3; // Left motor PWM
+const int IN1 = 4;  // Right Motor (-)
+const int IN2 = 2;  // Right Motor (+)
+const int IN3 = 7;  // Left Motor (+)
+const int IN4 = 5;  // Left Motor (-)
 
-
-#define DHTPIN 10      // Moved DHT22 to pin 10 to avoid conflicts
+#define DHTPIN 10      // DHT22 pin
 #define DHTTYPE DHT22
 
 // ==== LCD & DHT ====
@@ -25,9 +24,9 @@ const uint64_t pipe = 0xE8E8F0F0E1LL;
 int data[2];
 
 // ==== Other Vars ====
-int RightSpd = 250;
-int LeftSpd = 250;
-String direction = "stop";  // For displaying on LCD
+int RightSpd = 235;
+int LeftSpd = 200;
+String direction = "Stop";  // For displaying on LCD
 
 // Timing for DHT/LCD update
 unsigned long lastSensorUpdate = 0;
@@ -55,53 +54,45 @@ void setup() {
   lcd.init();
   lcd.backlight();
 }
-// Next time, limit the data array from 0 -> 20000
-// if sastisfied, continue, else -> stop
 
 void loop() {
   // ---- Handle RF24 car control ----
   if (radio.available()) {
     radio.read(data, sizeof(data));
 
-    if (data[0] < 340) {
-      // forward
+    // Check for invalid data ranges (based on transmitter's mapping)
+    if (data[0] < 300 || data[0] > 400 || data[1] < 100 || data[1] > 200) {
+      stopCar();
+      direction = "Stop";
+      Serial.println("Invalid data");
+    }
+    else if (data[0] < 340) {
       moveForward();
       direction = "Forward";
       Serial.println(data[0]);
     }
-    
-
     else if (data[0] > 360) {
-      // backward
       moveBackward();
       direction = "Backward";
       Serial.println(data[0]);
     }
-
     else if (data[1] < 140) {
-      turnRight(); //Left
-      direction = "Left";
-      Serial.println(data[1]);
-
-    }
-
-    else if (data[1] > 160) {
-      turnLeft(); //Right
+      turnRight(); // Corrected to right
       direction = "Right";
       Serial.println(data[1]);
 
     }
-
-    else if (data[0] > 340 && data[0] < 360 && data[1] > 140 && data[1] < 160 || data[0] == 0 || data[1] == 0 ) {
+    else if (data[1] > 160) {
+      turnLeft(); // Corrected to left
+      direction = "Left";
+      Serial.println(data[1]);
+    }
+    else {
       stopCar();
       direction = "Stop";
       Serial.println(data[0]);
     }
 
-    else if (data[0] < 0 || data[0] > 20000 || data[1] < 0 || data[1] > 20000){
-      stopCar();
-      direction = "Stop";
-    }
     // Print for debug
     Serial.println(direction);
   }
@@ -125,16 +116,14 @@ void loop() {
       lcd.print("Temp: ");
       lcd.print(tempC, 1);
       lcd.print((char)223);
-      lcd.print("C ");
+      lcd.print("C");
 
       lcd.setCursor(0, 1);
       lcd.print("Humi: ");
       lcd.print(humi, 0);
-      lcd.print("%");
-
-      //lcd.setCursor(0, 1);
-      //lcd.print("Dir: ");
-      //lcd.print(direction);
+      lcd.print("% ");
+      lcd.print("Dir: ");
+      lcd.print(direction);
     }
   }
 }
@@ -148,25 +137,16 @@ void moveForward() {
   digitalWrite(IN3, HIGH);
   digitalWrite(IN4, LOW);
 }
+
 void moveBackward() {
   analogWrite(enbA, RightSpd);
   analogWrite(enbB, LeftSpd);
   digitalWrite(IN1, LOW);
-
   digitalWrite(IN2, HIGH);
   digitalWrite(IN3, LOW);
   digitalWrite(IN4, HIGH);
-
 }
-void turnRight() {
 
-  analogWrite(enbA, RightSpd);
-  analogWrite(enbB, LeftSpd);
-  digitalWrite(IN1, LOW);
-  digitalWrite(IN2, HIGH);
-  digitalWrite(IN3, HIGH);
-  digitalWrite(IN4, LOW);
-}
 void turnLeft() {
   analogWrite(enbA, RightSpd);
   analogWrite(enbB, LeftSpd);
@@ -175,6 +155,16 @@ void turnLeft() {
   digitalWrite(IN3, LOW);
   digitalWrite(IN4, HIGH);
 }
+
+void turnRight() {
+  analogWrite(enbA, RightSpd);
+  analogWrite(enbB, LeftSpd);
+  digitalWrite(IN1, LOW);
+  digitalWrite(IN2, HIGH);
+  digitalWrite(IN3, HIGH);
+  digitalWrite(IN4, LOW);
+}
+
 void stopCar() {
   analogWrite(enbA, 0);
   analogWrite(enbB, 0);
