@@ -50,40 +50,40 @@ void loop(void){
 
   Serial.print("X axis data = ");
   Serial.println(data[0]);
-  //delay(delay_time);
+  delay(delay_time);
 
   if(data[0] < 340){
     Serial.println("forward");
     Serial.println();
-    //delay(delay_time);
+    delay(delay_time);
   }
   if(data[0] > 360){
     Serial.println("backward");
     Serial.println();
-    //delay(delay_time);
+    delay(delay_time);
   }
 
 
   Serial.print("Y axis data = ");
   Serial.println(data[1]);
-  //delay(delay_time);
+  delay(delay_time);
 
   if(data[1] > 160){
-    Serial.println("left");
-    Serial.println();
-    //delay(delay_time);
-  }
-  if(data[1] < 140){
     Serial.println("right");
     Serial.println();
-    //delay(delay_time);
+    delay(delay_time);
+  }
+  if(data[1] < 140){
+    Serial.println("left");
+    Serial.println();
+    delay(delay_time);
 
   }
 
   if(data[0] > 340 && data[0] < 360 && data[1] > 140 && data[1] < 160){
     Serial.println("stop");
     Serial.println();
-    //delay(delay_time);
+    delay(delay_time);
 
   }
 
